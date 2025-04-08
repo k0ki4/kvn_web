@@ -1,5 +1,10 @@
+import datetime as dt
+import json
+from datetime import datetime
 import os
 import re
+import secrets
+from functools import wraps
 
 import requests
 from flask import Blueprint, flash, render_template, redirect, url_for, session, request
@@ -15,76 +20,6 @@ register_form = Blueprint("reg", __name__,
                  template_folder='templates')
 
 
-@register_form.route('/vk-auth')
-def vk_auth():
-    # Формируем URL для авторизации
-    auth_url = (
-        f"https://oauth.vk.com/authorize?"
-        f"client_id={VK_CLIENT_ID}&"
-        f"display=page&"
-        f"redirect_uri={VK_REDIRECT_URI}&"
-        f"scope=email,groups&"  # Запрашиваем доступ к email и группам
-        f"response_type=code&"
-        f"v=5.131"
-    )
-    return redirect(auth_url)
-
-
-@register_form.route('/auth/callback')
-def vk_callback():
-    # Получаем код от VK
-    code = request.args.get('code')
-    if not code:
-        return "Ошибка авторизации", 400
-
-    # Получаем access token
-    token_url = (
-        f"https://oauth.vk.com/access_token?"
-        f"client_id={VK_CLIENT_ID}&"
-        f"client_secret={VK_CLIENT_SECRET}&"
-        f"redirect_uri={VK_REDIRECT_URI}&"
-        f"code={code}"
-    )
-
-    response = requests.get(token_url)
-    data = response.json()
-
-    if 'error' in data:
-        return f"Ошибка: {data['error_description']}", 400
-
-    # Сохраняем данные пользователя в сессии
-    session['vk_user_id'] = data.get('user_id')
-    session['vk_access_token'] = data.get('access_token')
-    session['vk_email'] = data.get('email', '')
-
-    # Получаем дополнительную информацию о пользователе
-    user_info = get_vk_user_info(data['access_token'], data['user_id'])
-    if user_info:
-        session['vk_user_name'] = f"{user_info['first_name']} {user_info['last_name']}"
-        session['vk_user_photo'] = user_info.get('photo_50', '')
-
-    return redirect(url_for('home'))
-
-
-def get_vk_user_info(access_token, user_id):
-    url = 'https://api.vk.com/method/users.get'
-    params = {
-        'access_token': access_token,
-        'user_ids': user_id,
-        'fields': 'photo_50',
-        'v': '5.131'
-    }
-    response = requests.get(url, params=params)
-    data = response.json()
-    return data.get('response', [{}])[0] if 'response' in data else None
-
-
-@register_form.route('/logout')
-def logout():
-    session.clear()
-    return redirect(url_for('global_site'))
-
-
 def normalize_vk_link(link):
     """Приводит ссылку ВК к единому формату"""
     link = link.strip()
@@ -95,9 +30,6 @@ def normalize_vk_link(link):
 
 @register_form.route('/form', methods=['GET', 'POST'])
 def get_form():
-    if 'vk_user_id' not in session:
-        print("Redirecting to auth...")
-        return redirect(url_for('reg.start_auth'))
 
     form = CreateTeamForm()
 
@@ -132,14 +64,9 @@ def get_form():
             # db.session.commit()
 
             flash('Команда успешно создана!', 'success')
-            return redirect(url_for('team_page'))
+            return redirect(url_for('global_site'))
 
         except Exception as e:
             flash(f'Ошибка при создании команды: {str(e)}', 'error')
 
     return render_template('form.html', form=form)
-
-
-@register_form.route('/start')
-def start_auth():
-    return render_template("no_reqister.html")

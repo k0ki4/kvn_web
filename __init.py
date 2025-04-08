@@ -1,4 +1,5 @@
 import os
+from datetime import timedelta
 
 from flask import Flask
 
@@ -8,7 +9,13 @@ app.config.update({
     'UPLOAD_FOLDER': 'all_group_img',
     'MAX_CONTENT_LENGTH': 5 * 1024 * 1024,  # 5MB
     'VK_DOMAIN': 'vk.com'
-})
+},
+    PERMANENT_SESSION_LIFETIME=timedelta(days=7),  # Срок жизни сессии
+    SESSION_COOKIE_NAME='flask_session',  # Имя cookie
+    SESSION_COOKIE_SECURE=True,  # Только HTTPS (для Glitch обязательно True)
+    SESSION_COOKIE_HTTPONLY=True,
+    SESSION_COOKIE_SAMESITE='Lax'  # Защита от CSRF
+)
 
 # Конфигурация VK
 VK_CLIENT_ID = os.getenv('VK_CLIENT_ID')
