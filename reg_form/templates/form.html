@@ -1,0 +1,56 @@
+<form method="POST" enctype="multipart/form-data" class="vk-form">
+    {{ form.hidden_tag() }}
+
+    <div class="form-block">
+        <h3>Создание команды ВКонтакте</h3>
+    </div>
+
+    <div class="form-row">
+        <div class="form-group">
+            {{ form.captain_link.label(class="form-label") }}
+            {{ form.captain_link(class="form-input") }}
+            <div class="form-hint">Пример: vk.com/id1 или vk.com/durov</div>
+        </div>
+
+        <div class="form-group">
+            {{ form.group_link.label(class="form-label") }}
+            {{ form.group_link(class="form-input") }}
+            <div class="form-hint">Пример: vk.com/club123 или vk.com/groupname</div>
+        </div>
+    </div>
+
+    <div class="form-group">
+        {{ form.api_group.label(class="form-label") }}
+        {{ form.api_group(class="form-input") }}
+        <div class="form-hint">Ключ можно получить в <a href="https://vk.com/dev" target="_blank">разделе для разработчиков</a></div>
+    </div>
+
+    <div class="form-group">
+        {{ form.team_photo.label(class="form-label") }}
+        <div class="file-upload">
+            {{ form.team_photo(class="file-input") }}
+            <label for="team_photo" class="file-label">
+                <span class="file-button">Выберите фото</span>
+                <span class="file-name">Файл не выбран</span>
+            </label>
+        </div>
+        <div class="form-hint">Формат: JPG или PNG, не более 5MB</div>
+    </div>
+
+    <div class="form-group">
+        {{ form.description.label(class="form-label") }}
+        {{ form.description(class="form-textarea") }}
+        <div class="char-counter"><span id="char-count">0</span>/500 символов</div>
+    </div>
+
+    <div class="form-actions">
+        {{ form.submit(class="vk-button") }}
+    </div>
+</form>
+
+<script>
+// Счетчик символов для описания
+document.getElementById('description').addEventListener('input', function() {
+    document.getElementById('char-count').textContent = this.value.length;
+});
+</script>
